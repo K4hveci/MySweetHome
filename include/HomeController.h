@@ -29,6 +29,7 @@ class Alarm;
 class Menu;
 class Storage;
 class ModeManager;
+class StateManager;
 class NotificationSystem;
 class DeviceFactory;
 class DetectorFactory;
@@ -55,6 +56,7 @@ private:
     // Managers
     Menu* menu;
     ModeManager* modeManager;
+    StateManager* stateManager;
     
     // Systems
     NotificationSystem* notificationSystem;
