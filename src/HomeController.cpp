@@ -1,4 +1,14 @@
-
+/**
+ * @file HomeController.cpp
+ * @brief Implementation of the Facade HomeController
+ * @version 5.0
+ * @date 03/12/2025
+ * 
+ * @authors
+ * - 220201013: System Integration - Facade, Main Loop, Module Integration
+ * 
+ * @patterns Facade
+ */
 
 #include "HomeController.h"
 #include "Device.h"
@@ -12,6 +22,7 @@
 #include "Menu.h"
 #include "Storage.h"
 #include "ModeManager.h"
+#include "NotificationSystem.h"
 #include "DeviceFactory.h"
 #include <iostream>
 #include <sstream>
@@ -26,7 +37,11 @@ HomeController::HomeController() : isRunning(false) {
     modeManager = new ModeManager();
     // StateManager removed in V2.5
     
-    // Notification System removed in V2.0
+    // Initialize notification system
+    notificationSystem = new NotificationSystem();
+    
+    // Set alarm observer
+    alarm->setObserver(notificationSystem);
     
     // Initialize default devices
     initializeDefaultDevices();
@@ -51,6 +66,7 @@ HomeController::~HomeController() {
     // Clean up managers and systems
     delete menu;
     delete modeManager;
+    delete notificationSystem;
     
     // Note: Alarm and Storage are singletons, not deleted here
 }
@@ -66,7 +82,7 @@ void HomeController::initializeDefaultDevices() {
 
 void HomeController::registerDevice(Device* device) {
     if (device) {
-        // Observer setup removed in V2.0
+        device->setObserver(notificationSystem);
         allDevices.push_back(device);
     }
 }
@@ -195,6 +211,10 @@ void HomeController::handleGetStatus() {
     std::cout << std::endl;
     std::cout << "--- SYSTEM STATUS ---" << std::endl;
     modeManager->displayCurrentMode();
+    
+    // Notification system
+    std::cout << std::endl;
+    notificationSystem->displayStatus();
     
     // All devices
     std::cout << std::endl;

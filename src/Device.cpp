@@ -1,7 +1,7 @@
 #include "Device.h"
 
 Device::Device(const std::string& brand, const std::string& model)
-    : brand(brand), model(model), powerState(false), operationMode(true) {
+    : brand(brand), model(model), powerState(false), operationMode(true), observer(NULL) {
     name = brand + " " + model;
 }
 
@@ -10,6 +10,7 @@ Device::~Device() {}
 void Device::powerOn() {
     if (!operationMode) {
         std::cout << "[WARNING] " << name << " is inactive/failed and cannot be powered on." << std::endl;
+        notifyFailure("Device is inactive/failed");
         return;
     }
     if (!powerState) {
@@ -62,7 +63,17 @@ void Device::setOperationMode(bool active) {
     operationMode = active;
     if (!active) {
         std::cout << "[WARNING] " << name << " has been marked as FAILED/INACTIVE." << std::endl;
-        // Failure notification removed in V2.0
+        notifyFailure("Device marked as failed");
+    }
+}
+
+void Device::setObserver(IDeviceObserver* obs) {
+    observer = obs;
+}
+
+void Device::notifyFailure(const std::string& message) {
+    if (observer) {
+        observer->onDeviceFailure(name, message);
     }
 }
 

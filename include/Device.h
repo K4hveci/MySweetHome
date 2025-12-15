@@ -4,6 +4,13 @@
 #include <string>
 #include <iostream>
 
+// Observer Pattern - Observer interface for device failure notifications
+class IDeviceObserver {
+public:
+    virtual ~IDeviceObserver() {}
+    virtual void onDeviceFailure(const std::string& deviceName, const std::string& message) = 0;
+};
+
 // Base Device class - Template Method Pattern
 class Device {
 protected:
@@ -12,6 +19,7 @@ protected:
     std::string model;
     bool powerState;      // true = on, false = off
     bool operationMode;   // true = active, false = inactive (failed)
+    IDeviceObserver* observer;
 
 public:
     Device(const std::string& brand, const std::string& model);
@@ -37,6 +45,8 @@ public:
     bool isActive() const;
     
     void setOperationMode(bool active);
+    void setObserver(IDeviceObserver* obs);
+    void notifyFailure(const std::string& message);
     
     // Prototype Pattern - Clone method
     virtual Device* clone() const = 0;

@@ -29,6 +29,7 @@ class Alarm;
 class Menu;
 class Storage;
 class ModeManager;
+class NotificationSystem;
 class DeviceFactory;
 class DetectorFactory;
 
@@ -54,6 +55,9 @@ private:
     // Managers
     Menu* menu;
     ModeManager* modeManager;
+    
+    // Systems
+    NotificationSystem* notificationSystem;
     
     // System state
     bool isRunning;
