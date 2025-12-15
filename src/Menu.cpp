@@ -128,6 +128,10 @@ void Menu::displayManual() const {
     std::cout << "     - Previous: Restore previous state from history" << std::endl;
     std::cout << std::endl;
     
+    std::cout << "  8. SECURITY SYSTEM" << std::endl;
+    std::cout << "     When motion is detected: Alarm -> Lights On -> Call Police" << std::endl;
+    std::cout << std::endl;
+    
     printLine('=');
 }
 
@@ -158,6 +162,7 @@ void Menu::displayAbout() const {
     std::cout << "  [Developer 2] - Factory Module" << std::endl;
     std::cout << "  [Developer 3] - Mode Manager Module" << std::endl;
     std::cout << "  [Developer 4] - State Manager Module" << std::endl;
+    std::cout << "  [Developer 5] - Security System Module" << std::endl;
     std::cout << std::endl;
     
     printLine('-');
@@ -171,8 +176,9 @@ void Menu::displayAbout() const {
     std::cout << "  - Memento (State history)" << std::endl;
     std::cout << "  - Observer (Device failure notifications)" << std::endl;
     std::cout << "  - Strategy (Notification strategies)" << std::endl;
+    std::cout << "  - Chain of Responsibility (Security sequences)" << std::endl;
     std::cout << "  - Template Method (Device power on/off)" << std::endl;
-    std::cout << "  - Facade (HomeController)" << std::endl;
+    std::cout << "  - Facade (HomeController, Security system)" << std::endl;
     std::cout << std::endl;
     
     printLine('=');
