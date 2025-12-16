@@ -1,11 +1,9 @@
 /**
  * @file HomeController.cpp
  * @brief Implementation of the Facade HomeController
- * @version 5.0
- * @date 03/12/2025
  * 
  * @authors
- * - 220201013: System Integration - Facade, Main Loop, Module Integration
+ * - 220201024: System Integration - Facade, Main Loop, Module Integration
  * 
  * @patterns Facade
  */
@@ -23,6 +21,7 @@
 #include "Storage.h"
 #include "ModeManager.h"
 #include "StateManager.h"
+#include "SecuritySystem.h"
 #include "NotificationSystem.h"
 #include "DeviceFactory.h"
 #include <iostream>
@@ -49,6 +48,9 @@ HomeController::HomeController() : isRunning(false) {
     
     // Update light pointers for systems
     updateLightPtrs();
+    
+    // Initialize security and detection systems
+    securitySystem = new SecuritySystem(alarm, &lightPtrs);
 }
 
 HomeController::~HomeController() {
@@ -68,6 +70,7 @@ HomeController::~HomeController() {
     delete menu;
     delete modeManager;
     delete stateManager;
+    delete securitySystem;
     delete notificationSystem;
     
     // Note: Alarm and Storage are singletons, not deleted here
@@ -128,6 +131,10 @@ void HomeController::start() {
     // Apply default state (Normal)
     std::cout << "[INIT] Applying default state (Normal)..." << std::endl;
     stateManager->applyState();
+    
+    // Activate security system
+    std::cout << "[INIT] Activating security system..." << std::endl;
+    securitySystem->activate();
     
     // Save initial state
     stateManager->saveState(modeManager->getCurrentModeName(), allDevices);
@@ -193,6 +200,9 @@ void HomeController::shutdown() {
     std::cout << "      MY SWEET HOME SYSTEM SHUTTING DOWN   " << std::endl;
     std::cout << "============================================" << std::endl;
     
+    // Deactivate systems
+    securitySystem->deactivate();
+    
     // Power off all non-critical devices
     for (size_t i = 0; i < allDevices.size(); ++i) {
         allDevices[i]->powerOff();
@@ -222,7 +232,9 @@ void HomeController::handleGetStatus() {
     std::cout << std::endl;
     modeManager->displayCurrentMode();
     
-    // Notification system
+    // Security and detection
+    std::cout << std::endl;
+    securitySystem->displayStatus();
     std::cout << std::endl;
     notificationSystem->displayStatus();
     
@@ -710,7 +722,7 @@ void HomeController::simulateMotionDetection() {
         Camera* cam = dynamic_cast<Camera*>(cameras[0]);
         if (cam) {
             cam->detectMotion();
-            // Security system removed in V3.0
+            securitySystem->handleMotionDetection();
         }
     }
 }
