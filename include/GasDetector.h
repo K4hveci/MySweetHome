@@ -17,7 +17,6 @@ public:
     virtual std::string getStatus() const;
     virtual Device* clone() const = 0;
     virtual void detect();
-    virtual void trigger(); // Override pure virtual
     
     int getGasLevel() const;
     void setGasLevel(int level);  // For simulation
