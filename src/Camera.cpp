@@ -6,7 +6,7 @@
  *
  * @authors
  * - 220201047: Security System - Camera motion detection logic
- *
+
  * @patterns Factory Method (Product)
  */
 
