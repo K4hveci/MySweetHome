@@ -1,4 +1,5 @@
 #include "GasDetector.h"
+#include "DetectionSystem.h"
 #include <sstream>
 
 GasDetector::GasDetector(const std::string& brand, const std::string& model)
@@ -24,11 +25,11 @@ void GasDetector::detect() {
         detected = true;
         std::cout << "[ALERT] " << name << " detected GAS! Level: " << gasLevel 
                   << "% (" << gasType << ")" << std::endl;
+        
+        if (detectionSystem) {
+            // Will trigger detection sequence - handled by DetectionSystem
+        }
     }
-}
-
-void GasDetector::trigger() {
-    detect();
 }
 
 int GasDetector::getGasLevel() const {
