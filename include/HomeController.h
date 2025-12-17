@@ -1,9 +1,11 @@
 /**
  * @file HomeController.h
  * @brief Facade class for managing the smart home system
+ * @version 5.0
+ * @date 03/12/2025
  * 
  * @authors
- * - 220201024: System Integration - Facade, Main Loop, Module Integration
+ * - 220201013: System Integration - Facade, Main Loop, Module Integration
  * 
  * @patterns Facade
  */
@@ -29,6 +31,7 @@ class Storage;
 class ModeManager;
 class StateManager;
 class SecuritySystem;
+class DetectionSystem;
 class NotificationSystem;
 class DeviceFactory;
 class DetectorFactory;
@@ -59,6 +62,7 @@ private:
     
     // Systems
     SecuritySystem* securitySystem;
+    DetectionSystem* detectionSystem;
     NotificationSystem* notificationSystem;
     
     // System state
@@ -114,6 +118,8 @@ public:
     
     // Simulation methods for testing
     void simulateMotionDetection();
+    void simulateSmokeDetection();
+    void simulateGasDetection();
     void simulateDeviceFailure(int deviceIndex);
 };
 
