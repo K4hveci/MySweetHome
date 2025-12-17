@@ -61,3 +61,10 @@ desktop.ini
 
 *.test
 *.g*
+
+# Web Interface
+web/node_modules/
+web/sessions/
+web/*.log
+web/debug_log.txt
+

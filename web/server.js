@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,43 +16,85 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Path to the compiled C++ executable
 const MSH_EXECUTABLE = path.join(__dirname, '..', 'build', 'bin', 'msh');
+const SESSIONS_DIR = path.join(__dirname, 'sessions');
+const SESSION_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
-let mshProcess = null;
+// Ensure sessions directory exists
+if (!fs.existsSync(SESSIONS_DIR)) {
+    fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+}
 
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log(`A user connected: ${socket.id}`);
+    
+    let userProcess = null;
+    let sessionTimeout = null;
+    const userSessionDir = path.join(SESSIONS_DIR, socket.id);
+
+    // Start session timer
+    sessionTimeout = setTimeout(() => {
+        console.log(`Session timed out for ${socket.id}`);
+        socket.emit('session-ended', 'Time limit reached (5 min). Please refresh to restart.');
+        cleanupSession();
+        socket.disconnect(true);
+    }, SESSION_DURATION_MS);
+
+    function cleanupSession() {
+        if (userProcess) {
+            userProcess.kill();
+            userProcess = null;
+        }
+        // Small delay to ensure process releases file locks
+        setTimeout(() => {
+            try {
+                if (fs.existsSync(userSessionDir)) {
+                    fs.rmSync(userSessionDir, { recursive: true, force: true });
+                }
+            } catch (e) {
+                console.error(`Failed to cleanup dir for ${socket.id}:`, e.message);
+            }
+        }, 100);
+    }
 
     socket.on('start-session', () => {
-        if (mshProcess) {
-            mshProcess.kill();
+        if (userProcess) {
+            userProcess.kill();
         }
 
-        console.log(`Spawning ${MSH_EXECUTABLE}...`);
-        
-        // Spawn the C++ process
-        // We assume the C++ app is built and located at ../build/bin/msh
-        // Dockerfile will ensure this structure.
+        // Create isolated directory for this session
         try {
-            mshProcess = spawn(MSH_EXECUTABLE, [], {
-                stdio: ['pipe', 'pipe', 'pipe'] // Pipe stdin, stdout, stderr
+            if (!fs.existsSync(userSessionDir)) {
+                fs.mkdirSync(userSessionDir);
+            }
+        } catch (e) {
+            socket.emit('terminal-output', `\n[Error] Could not create session workspace: ${e.message}`);
+            return;
+        }
+
+        console.log(`Spawning ${MSH_EXECUTABLE} for ${socket.id} in ${userSessionDir}`);
+        
+        try {
+            userProcess = spawn(MSH_EXECUTABLE, [], {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                cwd: userSessionDir // Run in isolated directory
             });
 
-            mshProcess.stdout.on('data', (data) => {
+            userProcess.stdout.on('data', (data) => {
                 const output = data.toString();
                 socket.emit('terminal-output', output);
             });
 
-            mshProcess.stderr.on('data', (data) => {
+            userProcess.stderr.on('data', (data) => {
                 const output = data.toString();
                 socket.emit('terminal-output', `[STDERR] ${output}`);
             });
 
-            mshProcess.on('close', (code) => {
+            userProcess.on('close', (code) => {
                 socket.emit('terminal-output', `\n[Process exited with code ${code}]`);
-                mshProcess = null;
+                userProcess = null;
             });
 
-            mshProcess.on('error', (err) => {
+            userProcess.on('error', (err) => {
                  socket.emit('terminal-output', `\n[Error spawning process: ${err.message}]\nIs the C++ app compiled?`);
             });
 
@@ -61,19 +104,29 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send-input', (input) => {
-        if (mshProcess && mshProcess.stdin) {
+        // SECURITY: Input Validation
+        // Allow only:
+        // 1. Numbers (any length, for quantity input)
+        // 2. Single letters (a-z, A-Z) for menu choices
+        // 3. '10' is covered by numbers rule.
+        const allowedPattern = /^(\d+|[a-zA-Z])$/;
+        const sanitizedInput = input.toString().trim();
+
+        if (!allowedPattern.test(sanitizedInput)) {
+            socket.emit('terminal-output', `\n[SECURITY BLOCK] Invalid command: "${sanitizedInput}"\nOnly numbers and single letters are allowed.\n`);
+            return;
+        }
+
+        if (userProcess && userProcess.stdin) {
             // Write input to the C++ process stdin
-            // Append newline as std::cin usually waits for it
-            mshProcess.stdin.write(input + '\n');
+            userProcess.stdin.write(sanitizedInput + '\n');
         }
     });
 
     socket.on('disconnect', () => {
-        console.log('User disconnected');
-        if (mshProcess) {
-            mshProcess.kill();
-            mshProcess = null;
-        }
+        console.log(`User disconnected: ${socket.id}`);
+        if (sessionTimeout) clearTimeout(sessionTimeout);
+        cleanupSession();
     });
 });
 

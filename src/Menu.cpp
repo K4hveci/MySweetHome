@@ -300,8 +300,8 @@ int Menu::getNumberInput() const {
 }
 
 void Menu::clearScreen() const {
-    // Cross-platform clear screen
-    std::cout << "\033[2J\033[1;1H";
+    // Send a special marker that the web frontend will interpret as a signal to clear the terminal window.
+    std::cout << "\n<<CLS>>\n";
 }
 
 void Menu::waitForKey() const {
